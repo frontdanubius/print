@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notes</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #3498db;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .map-container {
+            margin-top: 20px;
+            position: relative;
+            width: 100%;
+            padding-bottom: 75%;
+            background: #f0f0f0;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .buses-list {
+            margin-top: 20px;
+        }
+
+        #departureList {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #departureList li {
+            margin-bottom: 8px;
+            font-size: 18px;
+        }
+
+        .departure-room {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        #generalNotes {
+            margin-top: 20px;
+            border-top: 2px solid #3498db;
+            padding-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .notes-container {
+            margin-bottom: 20px;
+        }
+
+        .notes-container textarea {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+
+        .print-btn {
+            padding: 10px;
+            background-color: #3498db;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+        }
+
+        .file-upload-section {
+            margin-top: 20px;
+            border-top: 2px solid #3498db;
+            padding-top: 20px;
+            padding-bottom: 20px;
+        }
+
+        @media print {
+            #departureList li {
+                font-size: 24px;
+            }
+
+            .departure-room {
+                font-size: 30px;
+            }
+
+            #map {
+                width: 100%;
+            }
+
+            .print-only {
+                display: none;
+            }
+
+            /* Styles to attempt to maintain Excel sheet appearance during printing */
+            .print-sheet {
+                display: block;
+                margin: 20px;
+                font-size: 16px;
+                color: #000;
+            }
+
+            .print-sheet table {
+                border-collapse: collapse;
+                width: 100%;
+            }
+
+            .print-sheet th, .print-sheet td {
+                border: 1px solid #dddddd;
+                text-align: left;
+                padding: 8px;
+            }
+
+            .print-sheet th {
+                background-color: #f2f2f2;
+            }
+
+            /* Preserve cell background color when printing */
+            .print-sheet td {
+                background-color: inherit;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Room Numbers Input -->
+        <label for="roomNumber">Room Number:</label>
+        <input type="text" id="roomNumber" placeholder="Enter room number" onkeypress="handleKeyPress(event)">
+        
+        <!-- Departures List -->
+        <div class="departures-list">
+            <h2>Departures List</h2>
+            <ul id="departureList"></ul>
+            <button class="print-btn" onclick="printDepartureList()">Print Departures List</button>
+        </div>
+
+        <!-- Map Container -->
+        <div class="map-container">
+            <img id="map" src="jo.jpg" alt="Map of St John's Wood">
+        </div>
+
+        <!-- Print Map and Directions Button -->
+        <button class="print-btn print-only" onclick="printMapAndDirections()">Print Map and Directions</button>
+
+        <!-- List of Buses -->
+        <div class="buses-list">
+            <h2>Buses and Transportation</h2>
+            <ul>
+                <li><strong>To Oxford Street, Piccadilly Circus, Trafalgar Square, and Waterloo:</strong> Bus 139 St John's Wood Road Lord's Cricket Grd (Stop H)</li>
+                <li><strong>To Marble Arch:</strong> Bus 189 St John's Wood Road Lord's Cricket Grd (Stop H)</li>
+                <li><strong>To Selfridges and Oxford St:</strong> Bus 113 - London Central Mosque (Stop P)</li>
+                <li><strong>To Camden Town:</strong> Bus 274 - London Central Mosque (Stop N)</li>
+                <li><strong>To Paddington:</strong> Bus 46 - Cavendish Avenue (Stop E)</li>
+                <li><strong>To Westminster Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>
+                <li><strong>To London Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>
+            </ul>
+        </div>
+
+        <!-- General Notes -->
+        <div id="generalNotes">
+            <h2>General Notes</h2>
+            <div class="notes-container">
+                <textarea id="notes" rows="6"></textarea>
+            </div>
+            <button class="print-btn" onclick="printNotes()">Print Notes</button>
+        </div>
+
+        <!-- File Upload and Print Excel Tabs -->
+        <div class="file-upload-section">
+            <input type="file" id="excelFile" accept=".xlsx, .xls" />
+            <button class="print-btn" onclick="printExcelTabs()">Print Excel Tabs</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    <script>
+        var departureRooms = [];
+
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                addRoom();
+            }
+        }
+
+        function addRoom() {
+            var roomNumber = document.getElementById('roomNumber').value;
+
+            if (roomNumber && !isNaN(roomNumber) && !departureRooms.includes(roomNumber)) {
+                departureRooms.push(parseInt(roomNumber));
+                departureRooms.sort((a, b) => a - b);
+                updateDeparturesList();
+                document.getElementById('roomNumber').value = '';
+            } else {
+                alert('Please enter a valid room number.');
+            }
+        }
+
+        function updateDeparturesList() {
+            var departureList = document.getElementById('departureList');
+            // Clear previous list
+            departureList.innerHTML = '';
+
+            // Add sorted rooms to the list
+            departureRooms.forEach(room => {
+                var li = document.createElement('li');
+                li.className = 'departure-room';
+                li.textContent = 'Room ' + room
+                li.textContent = 'Room ' + room;
+                departureList.appendChild(li);
+            });
+        }
+
+        function printDepartureList() {
+            // Create a new window and print the Departures list
+            var printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Departures List</title></head><body>');
+            printWindow.document.write('<h2>Departures List</h2>');
+            printWindow.document.write('<ul>');
+            departureRooms.forEach(room => {
+                printWindow.document.write('<li class="departure-room">Room ' + room + '</li>');
+            });
+            printWindow.document.write('</ul>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function printMapAndDirections() {
+            // Create a new window and print the Map and Directions
+            var printWindow = window.open('', '_blank');
+            printWindow.document.write('<html><head><title>Map and Directions</title></head><body>');
+            printWindow.document.write('<h2>Map of St John\'s Wood</h2>');
+            printWindow.document.write('<img src="jo.jpg" alt="Map of St John\'s Wood" style="width:100%;">');
+            printWindow.document.write('<div class="buses-list">');
+            printWindow.document.write('<h2>Buses and Transportation</h2>');
+            printWindow.document.write('<ul>');
+            printWindow.document.write('<li><strong>To Oxford Street, Piccadilly Circus, Trafalgar Square, and Waterloo:</strong> Bus 139 St John\'s Wood Road Lord\'s Cricket Grd (Stop H)</li>');
+            printWindow.document.write('<li><strong>To Marble Arch:</strong> Bus 189 St John\'s Wood Road Lord\'s Cricket Grd (Stop H)</li>');
+            printWindow.document.write('<li><strong>To Selfridges and Oxford St:</strong> Bus 113 - London Central Mosque (Stop P)</li>');
+            printWindow.document.write('<li><strong>To Camden Town:</strong> Bus 274 - London Central Mosque (Stop N)</li>');
+            printWindow.document.write('<li><strong>To Paddington:</strong> Bus 46 - Cavendish Avenue (Stop E)</li>');
+            printWindow.document.write('<li><strong>To Westminster Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>');
+            printWindow.document.write('<li><strong>To London Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>');
+            printWindow.document.write('</ul>');
+            printWindow.document.write('</div>');
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.onload = function () {
+                printWindow.print();
+                printWindow.onafterprint = function () {
+                    printWindow.close();
+                };
+            };
+        }
+        function printNotes() {
+    // Get the content of the notes textarea
+    var notesContent = document.getElementById('notes').value;
+
+    // Create a temporary iframe
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+
+    // Set the content of the iframe
+    iframe.contentDocument.write('<html><head><title>General Notes</title></head><body>');
+    iframe.contentDocument.write('<h2>General Notes</h2>');
+    iframe.contentDocument.write('<p>' + notesContent + '</p>');
+    iframe.contentDocument.write('</body></html>');
+    iframe.contentDocument.close();
+
+    // Trigger the print dialog for the iframe
+    iframe.contentWindow.print();
+
+    // Remove the temporary iframe from the document
+    document.body.removeChild(iframe);
+}
+
+
+
+        function printExcelTabs() {
+            // Read the uploaded Excel file
+            var input = document.getElementById('excelFile');
+            var file = input.files[0];
+
+            if (file) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    var data = new Uint8Array(e.target.result);
+                    var workbook = XLSX.read(data, { type: 'array' });
+
+                    // Create a temporary iframe
+                    var iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    document.body.appendChild(iframe);
+
+                    // Add the print style to the iframe
+                    var style = document.createElement('style');
+                    style.innerHTML = '.print-sheet {display: block; margin: 20px; font-size: 16px; color: #000;} .print-sheet table {border-collapse: collapse; width: 100%;} .print-sheet th, .print-sheet td {border: 1px solid #dddddd; text-align: left; padding: 8px;} .print-sheet th {background-color: #f2f2f2;} .print-sheet td {background-color: inherit;}';
+                    iframe.contentDocument.head.appendChild(style);
+
+                    // Loop through each sheet and append its content to the iframe
+                    workbook.SheetNames.forEach(function (sheetName) {
+                        var sheet = workbook.Sheets[sheetName];
+                        var html = XLSX.utils.sheet_to_html(sheet);
+
+                        // Add the sheet content to the iframe
+                        var printDiv = document.createElement('div');
+                        printDiv.className = 'print-sheet';
+                        printDiv.innerHTML = '<h2>' + sheetName + '</h2>' + html;
+                        iframe.contentDocument.body.appendChild(printDiv);
+                    });
+
+                    // Trigger the print dialog for the iframe
+                    iframe.contentWindow.print();
+
+                    // Remove the temporary iframe from the document
+                    document.body.removeChild(iframe);
+                };
+
+                reader.readAsArrayBuffer(file);
+            }
+        }
+    </script>
+</body>
+
+</html>
