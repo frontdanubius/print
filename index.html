@@ -172,6 +172,8 @@
             </ul>
         </div>
 
+        
+
         <!-- General Notes -->
         <div id="generalNotes">
             <h2>General Notes</h2>
@@ -190,57 +192,87 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
     <script>
-        var departureRooms = [];
+    var departureRooms = [];
 
-        function handleKeyPress(event) {
-            if (event.key === "Enter") {
-                addRoom();
-            }
+function handleKeyPress(event) {
+    if (event.key === "Enter") {
+        addRoom();
+    }
+}
+
+function addRoom() {
+    var roomNumber = document.getElementById('roomNumber').value;
+
+    if (roomNumber && !isNaN(roomNumber) && !departureRooms.includes(roomNumber)) {
+        departureRooms.push(parseInt(roomNumber));
+        departureRooms.sort((a, b) => a - b);
+        updateDeparturesList();
+        document.getElementById('roomNumber').value = '';
+    } else {
+        alert('Please enter a valid room number.');
+    }
+}
+
+function updateDeparturesList() {
+    var departureList = document.getElementById('departureList');
+    // Clear previous list
+    departureList.innerHTML = '';
+
+    // Add sorted rooms to the list
+    departureRooms.forEach(room => {
+        var li = document.createElement('li');
+        li.className = 'departure-room';
+        li.textContent = 'Room ' + room;
+        departureList.appendChild(li);
+    });
+}
+
+function printDepartureList() {
+    // Create a new window and print the Departures list
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>Departures List</title></head><body>');
+    printWindow.document.write('<h2>Departures List</h2>');
+
+    // Separate rooms by floors
+    var floorRooms = {};
+    departureRooms.forEach(room => {
+        var roomString = room.toString();
+        var floor;
+        if (roomString.length === 3) {
+            floor = parseInt(roomString[0]); // 1st floor rooms
+        } else {
+            floor = parseInt(roomString.substring(0, 2)); // 10th and 11th floor rooms
         }
 
-        function addRoom() {
-            var roomNumber = document.getElementById('roomNumber').value;
-
-            if (roomNumber && !isNaN(roomNumber) && !departureRooms.includes(roomNumber)) {
-                departureRooms.push(parseInt(roomNumber));
-                departureRooms.sort((a, b) => a - b);
-                updateDeparturesList();
-                document.getElementById('roomNumber').value = '';
-            } else {
-                alert('Please enter a valid room number.');
-            }
+        if (!floorRooms[floor]) {
+            floorRooms[floor] = [];
         }
+        floorRooms[floor].push(room);
+    });
 
-        function updateDeparturesList() {
-            var departureList = document.getElementById('departureList');
-            // Clear previous list
-            departureList.innerHTML = '';
-
-            // Add sorted rooms to the list
-            departureRooms.forEach(room => {
-                var li = document.createElement('li');
-                li.className = 'departure-room';
-                li.textContent = 'Room ' + room
-                li.textContent = 'Room ' + room;
-                departureList.appendChild(li);
-            });
-        }
-
-        function printDepartureList() {
-            // Create a new window and print the Departures list
-            var printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Departures List</title></head><body>');
-            printWindow.document.write('<h2>Departures List</h2>');
+    // Print each floor's rooms
+    for (var floor = 1; floor <= 11; floor++) { // Assuming floors 1 to 11
+        if (floorRooms[floor]) {
+            printWindow.document.write('<h3>' + floor + ' Floor</h3>');
             printWindow.document.write('<ul>');
-            departureRooms.forEach(room => {
+            floorRooms[floor].forEach(room => {
                 printWindow.document.write('<li class="departure-room">Room ' + room + '</li>');
             });
             printWindow.document.write('</ul>');
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.print();
+            // Add a line break between floors
+            printWindow.document.write('<hr style="margin: 20px 0;">');
         }
+    }
 
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+
+    // Increase font size for better visibility on the printed paper
+    printWindow.document.body.style.fontSize = '20px';
+
+    // Trigger the print dialog for the new window
+    printWindow.print();
+}
         function printMapAndDirections() {
             // Create a new window and print the Map and Directions
             var printWindow = window.open('', '_blank');
