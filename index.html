@@ -56,15 +56,17 @@
             font-weight: bold;
         }
 
-        #generalNotes {
+        #Handover {
             margin-top: 20px;
             border-top: 2px solid #3498db;
             padding-top: 20px;
             margin-bottom: 20px;
         }
 
-        .notes-container {
-            margin-bottom: 20px;
+        .notes-container p {
+            font-size: 72px; /* Increase font size for handover notes */
+            list-style-type: decimal;
+            padding-left: 20px;
         }
 
         .notes-container textarea {
@@ -88,9 +90,28 @@
             padding-bottom: 20px;
         }
 
+        #hotel-information {
+            max-width: 400px;
+            margin: 20px auto;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            position: static;
+        }
+
+        /* Your existing styles here */
+        .hide-on-print {
+            display: none;
+        }
+
         @media print {
-            #departureList li {
-                font-size: 24px;
+            /* Your existing print styles here */
+            .hide-on-print {
+                display: none !important;
+            }
+
+            .hide-on-print-button {
+                display: none;
             }
 
             .departure-room {
@@ -118,7 +139,8 @@
                 width: 100%;
             }
 
-            .print-sheet th, .print-sheet td {
+            .print-sheet th,
+            .print-sheet td {
                 border: 1px solid #dddddd;
                 text-align: left;
                 padding: 8px;
@@ -128,9 +150,24 @@
                 background-color: #f2f2f2;
             }
 
-            /* Preserve cell background color when printing */
             .print-sheet td {
                 background-color: inherit;
+            }
+
+            .notes-container p {
+                font-size: 72px;
+                list-style-type: decimal;
+                padding-left: 20px;
+            }
+
+            #hotel-information {
+                max-width: 400px;
+                margin: 20px auto;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                padding: 10px;
+                position: static;
+                page-break-before: always; /* Add page break before hotel information */
             }
         }
     </style>
@@ -142,12 +179,12 @@
         <!-- Room Numbers Input -->
         <label for="roomNumber">Room Number:</label>
         <input type="text" id="roomNumber" placeholder="Enter room number" onkeypress="handleKeyPress(event)">
-        
+
         <!-- Departures List -->
         <div class="departures-list">
-            <h2>Departures List</h2>
+            <h2>Rooms by floor</h2>
             <ul id="departureList"></ul>
-            <button class="print-btn" onclick="printDepartureList()">Print Departures List</button>
+            <button class="print-btn" onclick="printDepartureList()">Print Rooms by floor</button>
         </div>
 
         <!-- Map Container -->
@@ -162,7 +199,8 @@
         <div class="buses-list">
             <h2>Buses and Transportation</h2>
             <ul>
-                <li><strong>To Oxford Street, Piccadilly Circus, Trafalgar Square, and Waterloo:</strong> Bus 139 St John's Wood Road Lord's Cricket Grd (Stop H)</li>
+                <li><strong>To Oxford Street, Piccadilly Circus, Trafalgar Square, and Waterloo:</strong> Bus 139 St
+                    John's Wood Road Lord's Cricket Grd (Stop H)</li>
                 <li><strong>To Marble Arch:</strong> Bus 189 St John's Wood Road Lord's Cricket Grd (Stop H)</li>
                 <li><strong>To Selfridges and Oxford St:</strong> Bus 113 - London Central Mosque (Stop P)</li>
                 <li><strong>To Camden Town:</strong> Bus 274 - London Central Mosque (Stop N)</li>
@@ -172,33 +210,33 @@
             </ul>
         </div>
 
-        
-
-        <!-- General Notes -->
-        <div id="generalNotes">
-            <h2>General Notes</h2>
+        <div id="Handover">
+            <h2>Handover</h2>
             <div class="notes-container">
                 <textarea id="notes" rows="6"></textarea>
             </div>
-            <button class="print-btn" onclick="printNotes()">Print Notes</button>
+            <button class="print-btn" onclick="printNotes()">Print Handover</button>
         </div>
 
-        <!-- File Upload and Print Excel Tabs -->
-        <div class="file-upload-section">
-            <input type="file" id="excelFile" accept=".xlsx, .xls" />
-            <button class="print-btn" onclick="printExcelTabs()">Print Excel Tabs</button>
+        <div id="hotel-information">
+            <h2>Danubius Hotel Regents Park</h2> 
+            <p>18 Lodge Road St. John’S Wood, London NW8 7JT</p>
+            <p>020 7722 7722</p>
+            <p>Email: frontdesk@dananubiuslondon.co.uk</p>
+            <p>Reservations: reservations@danubiuslondon.co.uk</p>
+            <!-- The button is assigned the class 'hide-on-print-button' to hide it during printing -->
+            <button class="print-btn hide-on-print-button" onclick="printHotelCard()">Print email</button>
         </div>
-    </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
+    
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
     <script>
-    var departureRooms = [];
+        var departureRooms = [];
 
-function handleKeyPress(event) {
-    if (event.key === "Enter") {
-        addRoom();
-    }
-}
+        function handleKeyPress(event) {
+            if (event.key === "Enter") {
+                addRoom();
+            }
+        }
 
 function addRoom() {
     var roomNumber = document.getElementById('roomNumber').value;
@@ -273,34 +311,36 @@ function printDepartureList() {
     // Trigger the print dialog for the new window
     printWindow.print();
 }
-        function printMapAndDirections() {
-            // Create a new window and print the Map and Directions
-            var printWindow = window.open('', '_blank');
-            printWindow.document.write('<html><head><title>Map and Directions</title></head><body>');
-            printWindow.document.write('<h2>Map of St John\'s Wood</h2>');
-            printWindow.document.write('<img src="jo.jpg" alt="Map of St John\'s Wood" style="width:100%;">');
-            printWindow.document.write('<div class="buses-list">');
-            printWindow.document.write('<h2>Buses and Transportation</h2>');
-            printWindow.document.write('<ul>');
-            printWindow.document.write('<li><strong>To Oxford Street, Piccadilly Circus, Trafalgar Square, and Waterloo:</strong> Bus 139 St John\'s Wood Road Lord\'s Cricket Grd (Stop H)</li>');
-            printWindow.document.write('<li><strong>To Marble Arch:</strong> Bus 189 St John\'s Wood Road Lord\'s Cricket Grd (Stop H)</li>');
-            printWindow.document.write('<li><strong>To Selfridges and Oxford St:</strong> Bus 113 - London Central Mosque (Stop P)</li>');
-            printWindow.document.write('<li><strong>To Camden Town:</strong> Bus 274 - London Central Mosque (Stop N)</li>');
-            printWindow.document.write('<li><strong>To Paddington:</strong> Bus 46 - Cavendish Avenue (Stop E)</li>');
-            printWindow.document.write('<li><strong>To Westminster Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>');
-            printWindow.document.write('<li><strong>To London Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>');
-            printWindow.document.write('</ul>');
-            printWindow.document.write('</div>');
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.onload = function () {
-                printWindow.print();
-                printWindow.onafterprint = function () {
-                    printWindow.close();
-                };
-            };
-        }
-        function printNotes() {
+
+function printMapAndDirections() {
+    // Create a new window and print the Map and Directions
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>Map and Directions</title></head><body>');
+    printWindow.document.write('<h2>Map of St John\'s Wood</h2>');
+    printWindow.document.write('<img src="jo.jpg" alt="Map of St John\'s Wood" style="width:100%;">');
+    printWindow.document.write('<div class="buses-list">');
+    printWindow.document.write('<h2>Buses and Transportation</h2>');
+    printWindow.document.write('<ul>');
+    printWindow.document.write('<li><strong>To Oxford Street, Piccadilly Circus, Trafalgar Square, and Waterloo:</strong> Bus 139 St John\'s Wood Road Lord\'s Cricket Grd (Stop H)</li>');
+    printWindow.document.write('<li><strong>To Marble Arch:</strong> Bus 189 St John\'s Wood Road Lord\'s Cricket Grd (Stop H)</li>');
+    printWindow.document.write('<li><strong>To Selfridges and Oxford St:</strong> Bus 113 - London Central Mosque (Stop P)</li>');
+    printWindow.document.write('<li><strong>To Camden Town:</strong> Bus 274 - London Central Mosque (Stop N)</li>');
+    printWindow.document.write('<li><strong>To Paddington:</strong> Bus 46 - Cavendish Avenue (Stop E)</li>');
+    printWindow.document.write('<li><strong>To Westminster Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>');
+    printWindow.document.write('<li><strong>To London Bridge:</strong> Jubilee Line (St Johns Wood Station)</li>');
+    printWindow.document.write('</ul>');
+    printWindow.document.write('</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.onload = function () {
+        printWindow.print();
+        printWindow.onafterprint = function () {
+            printWindow.close();
+        };
+    };
+}
+
+function printNotes() {
     // Get the content of the notes textarea
     var notesContent = document.getElementById('notes').value;
 
@@ -309,9 +349,9 @@ function printDepartureList() {
     iframe.style.display = 'none';
     document.body.appendChild(iframe);
 
-    // Set the content of the iframe
-    iframe.contentDocument.write('<html><head><title>General Notes</title></head><body>');
-    iframe.contentDocument.write('<h2>General Notes</h2>');
+    // Set the content of the iframe with added styles
+    iframe.contentDocument.write('<html><head><title>Handover</title><style>body { font-size: 2em; }</style></head><body>');
+    iframe.contentDocument.write('<h2>Handover</h2>');
     iframe.contentDocument.write('<p>' + notesContent + '</p>');
     iframe.contentDocument.write('</body></html>');
     iframe.contentDocument.close();
@@ -325,50 +365,26 @@ function printDepartureList() {
 
 
 
-        function printExcelTabs() {
-            // Read the uploaded Excel file
-            var input = document.getElementById('excelFile');
-            var file = input.files[0];
+        // Function to print the Hotel Information Card
+        function printHotelCard() {
+    // Create a new window and print the Hotel Card
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<html><head><title>Hotel Information</title><style>body { font-size: 2em; }</style></head><body>');
+    printWindow.document.write('<div id="hotel-information">');
+    printWindow.document.write('<h2>Danubius Hotel Regents Park</h2>');
+    printWindow.document.write('<p>18 Lodge Road St. John’S Wood, London NW8 7JT</p>');
+    printWindow.document.write('<p>020 7722 7722</p>');
+    printWindow.document.write('<p>Email: frontdesk@danubiuslondon.co.uk</p>');
+    printWindow.document.write('<p>Reservations: reservations@danubiuslondon.co.uk</p>');
+    printWindow.document.write('</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
 
-            if (file) {
-                var reader = new FileReader();
+    // Trigger the print dialog for the new window
+    printWindow.print();
+}
 
-                reader.onload = function (e) {
-                    var data = new Uint8Array(e.target.result);
-                    var workbook = XLSX.read(data, { type: 'array' });
 
-                    // Create a temporary iframe
-                    var iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    document.body.appendChild(iframe);
-
-                    // Add the print style to the iframe
-                    var style = document.createElement('style');
-                    style.innerHTML = '.print-sheet {display: block; margin: 20px; font-size: 16px; color: #000;} .print-sheet table {border-collapse: collapse; width: 100%;} .print-sheet th, .print-sheet td {border: 1px solid #dddddd; text-align: left; padding: 8px;} .print-sheet th {background-color: #f2f2f2;} .print-sheet td {background-color: inherit;}';
-                    iframe.contentDocument.head.appendChild(style);
-
-                    // Loop through each sheet and append its content to the iframe
-                    workbook.SheetNames.forEach(function (sheetName) {
-                        var sheet = workbook.Sheets[sheetName];
-                        var html = XLSX.utils.sheet_to_html(sheet);
-
-                        // Add the sheet content to the iframe
-                        var printDiv = document.createElement('div');
-                        printDiv.className = 'print-sheet';
-                        printDiv.innerHTML = '<h2>' + sheetName + '</h2>' + html;
-                        iframe.contentDocument.body.appendChild(printDiv);
-                    });
-
-                    // Trigger the print dialog for the iframe
-                    iframe.contentWindow.print();
-
-                    // Remove the temporary iframe from the document
-                    document.body.removeChild(iframe);
-                };
-
-                reader.readAsArrayBuffer(file);
-            }
-        }
     </script>
 </body>
 
